@@ -1,0 +1,144 @@
+---
+title: "PRA_Visualizacion"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+#  VISUALIZACIÓN DE LOS DISTINTOS FACTORES DETERMINANTES EN UN INFARTO DE MIOCARDIO.
+
+
+```{r}
+# Librerias
+
+library(ggplot2)
+library(scales)
+library(openxlsx)
+```
+
+
+
+```{r}
+# Cargamos el conjunto de datos
+
+corazon <- read.csv(file= 'Myocardial.csv' ,sep=',')
+
+colnames(corazon)
+head(corazon)
+```
+
+
+```{r}
+# Seleccionamos las variables que vamos a utilizar en la visualización:
+
+infartos <- data.frame(corazon$ID,corazon$AGE,corazon$SEX,corazon$INF_ANAM,corazon$STENOK_AN,corazon$FK_STENOK,corazon$IBS_POST,corazon$IBS_NASL,corazon$GB,corazon$SIM_GIPERT,corazon$DLIT_AG,corazon$ZSN_A,corazon$TIME_B_S,corazon$LET_IS)
+
+colnames(infartos) <- c('ID','Edad','Sexo','N_infartos','Angina_de_pecho','Clase_de_angina','Previa_enfermedad','Hereditario','Hipertension','Hipertension_sintomas','Duracion_hipertension','Fallo_cronico','Tiempo','Daño_causado')
+
+
+head(infartos)
+```
+
+```{r}
+prop.table(table(infartos$Sexo))
+```
+
+
+```{r}
+anginas <- data.frame(infartos$Angina_de_pecho,infartos$Clase_de_angina)
+
+# Eliminamos los registros con 0, ya que indica que no existe angina alguna.
+cero_angina <- apply(anginas,1,function(row) all(row!=0))
+anginas<- anginas[cero_angina,]
+
+par(mfrow=c(1,2))
+barplot(table(anginas$infartos.Angina_de_pecho),main='Tiempo de detección de Angina',xlab='Tiempo en años desde la detección',col='cyan',ylab='Nº pacientes')
+
+barplot(table(anginas$infartos.Clase_de_angina),main='Tipo de Angina',xlab='Clases',las=2,ylab='Nº pacientes', col ='orange')
+
+```
+```{r}
+infartos$Sexo <- replace(infartos$Sexo,infartos$Sexo=='0','Mujer')
+infartos$Sexo <- replace(infartos$Sexo,infartos$Sexo=='1','Hombre')
+
+par(mfrow=c(1,2))
+
+ggplot(data=infartos, aes(N_infartos,fill=Sexo)) + geom_histogram(bins=30) + labs(title = "Nº de infartos según el Sexo")+ylab("Pacientes")+xlab("Nº de infartos")
+
+
+infartos$N_infartos <- replace(infartos$N_infartos,infartos$N_infartos=='0','Ninguno')
+infartos$N_infartos <- replace(infartos$N_infartos,infartos$N_infartos=='1','1.Uno')
+infartos$N_infartos <- replace(infartos$N_infartos,infartos$N_infartos=='2','2.Dos')
+infartos$N_infartos <- replace(infartos$N_infartos,infartos$N_infartos=='3','3.Tres o más')
+
+ggplot(infartos,aes(Edad,fill=N_infartos)) + geom_histogram(bins=30) + labs(title = "Nº de infartos según la Edad")+ylab("Pacientes")+xlab("Nº de infartos")
+
+
+```
+
+
+```{r}
+infartos$Hipertension <- replace(infartos$Hipertension,infartos$Hipertension=='0','No existe')
+infartos$Hipertension <- replace(infartos$Hipertension,infartos$Hipertension=='1','Fase 1')
+infartos$Hipertension <- replace(infartos$Hipertension,infartos$Hipertension=='2','Fase 2')
+infartos$Hipertension <- replace(infartos$Hipertension,infartos$Hipertension=='3','Fase 3')
+
+ggplot(infartos,aes(Duracion_hipertension,fill=Hipertension)) + geom_histogram(bins=30) + labs(title = "Fase de la hipertensión en función del tiempo de diagnóstico")+ylab("Pacientes")+xlab('Duracion en años de la hipertensión') 
+```
+
+
+### Nuestro objetivo ahora es preparar algunas variables para poder extraerlas y visualizarlas interactivamente con la herramienta Flourish
+
+```{r}
+#Creamos un nuevo dataframe para Flourish
+
+flourish <- data.frame(infartos$Edad,infartos$Sexo,infartos$N_infartos,infartos$Clase_de_angina,infartos$Daño_causado,infartos$Tiempo)
+head(flourish)
+
+```
+
+
+```{r}
+# Como las variables Sexo y N_infartos ya están transformadas, solo necesitamos modificar la variable Daño Causado y Tiempo de llegada.
+
+
+flourish$infartos.Daño_causado <- replace(flourish$infartos.Daño_causado,flourish$infartos.Daño_causado=='0','Desconocido')
+flourish$infartos.Daño_causado <- replace(flourish$infartos.Daño_causado,flourish$infartos.Daño_causado=='1','Shock cardiogénico')
+flourish$infartos.Daño_causado <- replace(flourish$infartos.Daño_causado,flourish$infartos.Daño_causado=='2','Edema pulmonar')
+flourish$infartos.Daño_causado <- replace(flourish$infartos.Daño_causado,flourish$infartos.Daño_causado=='3','Ruptura del miocardio')
+flourish$infartos.Daño_causado <- replace(flourish$infartos.Daño_causado,flourish$infartos.Daño_causado=='4','Evolución de insuficiencia cardiaca')
+flourish$infartos.Daño_causado <- replace(flourish$infartos.Daño_causado,flourish$infartos.Daño_causado=='5','Trombo')
+flourish$infartos.Daño_causado <- replace(flourish$infartos.Daño_causado,flourish$infartos.Daño_causado=='6','Asystoles')
+flourish$infartos.Daño_causado <- replace(flourish$infartos.Daño_causado,flourish$infartos.Daño_causado=='7','Fiibrilación ventricular')
+
+table(flourish$infartos.Daño_causado)
+```
+
+
+```{r}
+#Realizamos lo mismo para tiempo de llegada
+
+flourish$infartos.Tiempo <- replace(flourish$infartos.Tiempo,flourish$infartos.Tiempo=='1','Menos de 2 h')
+flourish$infartos.Tiempo <- replace(flourish$infartos.Tiempo,flourish$infartos.Tiempo=='2','2-4 horas')
+flourish$infartos.Tiempo <- replace(flourish$infartos.Tiempo,flourish$infartos.Tiempo=='3','4-6 horas')
+flourish$infartos.Tiempo <- replace(flourish$infartos.Tiempo,flourish$infartos.Tiempo=='4','6-8 horas')
+flourish$infartos.Tiempo <- replace(flourish$infartos.Tiempo,flourish$infartos.Tiempo=='5','8-12 horas')
+flourish$infartos.Tiempo <- replace(flourish$infartos.Tiempo,flourish$infartos.Tiempo=='6','12-24 horas')
+flourish$infartos.Tiempo <- replace(flourish$infartos.Tiempo,flourish$infartos.Tiempo=='7','Más de 1 día')
+flourish$infartos.Tiempo <- replace(flourish$infartos.Tiempo,flourish$infartos.Tiempo=='8','Más de 2 días')
+flourish$infartos.Tiempo <- replace(flourish$infartos.Tiempo,flourish$infartos.Tiempo=='9','Más de 3 días')
+
+table(flourish$infartos.Tiempo)
+```
+
+
+```{r}
+head(flourish)
+```
+
+```{r}
+#Ahora simplemente debemos extraer estos datos a un csv para cargarlos al Flourish.
+
+write.xlsx(flourish,'Flourish.xlsx')
+```
+
