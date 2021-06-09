@@ -1,4 +1,6 @@
-# PRACTICA FINAL: Visualizacion_de_datos
+# PRACTICA FINAL: Visualizacion de datos. 
+## Universitat Oberta de Catalunya.
+
 # Factores determinantes en un infarto de miocardio.
 Repositorio web donde se encontrarán todos los archivos necesarios para ejecutar y llevar a cabo la visualización sobre infarto de miocardio.
 
